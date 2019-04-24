@@ -1,0 +1,7 @@
+apiVersion: workshopnamespaces.operator.prgcont.cz/v1alpha1
+kind: WorkshopNamespace
+metadata:
+  name: example-workshopnamespace
+spec:
+  # Add fields here
+  size: 3

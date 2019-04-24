@@ -1,0 +1,5 @@
+---
+- version: v1alpha1
+  group: workshopnamespaces.operator.prgcont.cz
+  kind: WorkshopNamespace
+  role: /opt/ansible/roles/workshopnamespace
