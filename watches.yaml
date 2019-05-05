@@ -3,3 +3,6 @@
   group: workshopnamespaces.operator.prgcont.cz
   kind: WorkshopNamespace
   role: /opt/ansible/roles/workshopnamespace
+  finalizer:
+    name: finalizer.workshopnamespaces.operator.prgcont.cz
+    role: /opt/ansible/roles/teardown_workshopnamespace

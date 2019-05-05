@@ -1,0 +1,20 @@
+---
+- name: Set namespace variables
+  set_fact:
+    namespace_name: "{{ meta.name }}"
+
+- name: Delete Namespace
+  k8s:
+    state: absent
+    definition: "{{ lookup('template', item.name) | from_yaml }}"
+  when: item.api_exists | default(True)
+  loop:
+    - name: namespace.yaml.j2
+
+- name: Delete Secret
+  k8s:
+    state: absent
+    api_version: v1
+    kind: Secret
+    namespace: default
+    name: "namespace-{{ namespace_name }}"
