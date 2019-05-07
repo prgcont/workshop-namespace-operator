@@ -6,7 +6,7 @@ Kubernetes Operator for setting up Kubernetes Namespace and User for workshop se
 
 Register CRD:
 #+begin_src bash 
-kubectl apply -f ./deploy/crds/workshopnamespaces_v1alpha1_workshopnamespace_crd.yaml
+kubectl apply -f ./deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
 #+end_src
 
 ** Local testing
@@ -26,7 +26,7 @@ See [[fro more ][official prerequisites]] for more details.
 
 Register CRD:
 #+begin_src bash 
-kubectl apply -f ./deploy/crds/workshopnamespaces_v1alpha1_workshopnamespace_crd.yaml
+kubectl apply -f ./deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
 #+end_src
 
 *** Getting Started
@@ -38,7 +38,7 @@ minikube start --kubernetes-version v1.12.4
 
 Create CRD in k8s API
 #+begin_src bash
-kubectl apply -f deploy/crds/workshopnamespaces_v1alpha1_workshopnamespace_crd.yaml
+kubectl apply -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
 #+end_src
 
 Update /watches.yaml/ ~role~ section to reflect path on your computer, e.g. ~/home/<USERNAME>/workshop-namespace-operator/roles/workshopnamespace~. 
@@ -55,7 +55,7 @@ operator-sdk up local
 Create test CR: 
 
 #+begin_src bash
-kubectl apply -f ./deploy/crds/workshopnamespaces_v1alpha1_workshopnamespace_cr.yaml
+kubectl apply -f ./deploy/crds/workshopnamespaces_v1alpha1_operator_cr.yaml
 #+end_src
 
 *** Deploy to k8s cluster
@@ -68,7 +68,7 @@ docker push prgcont/workshop-namespace-operator:v0.0.1
 
 Create CRD in target cluster:
 #+begin_src bash
-kubectl create -f deploy/crds/workshopnamespaces_v1alpha1_workshopnamespace_crd.yaml
+kubectl create -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
 #+end_src
 
 Create Operator 
@@ -80,7 +80,7 @@ sed 's/{{ REPLACE_IMAGE }}/prgcont\/workshop-namespace-operator:v0.0.1/' deploy/
 
 Create test CR to verify if namespace is created:
 #+begin_src bash
-kubectl create -f deploy/crds/workshopnamespaces_v1alpha1_workshopnamespace_cr.yaml
+kubectl create -f deploy/crds/workshopnamespaces_v1alpha1_operator_cr.yaml
 
 #+end_src
 
@@ -102,5 +102,6 @@ kubectl -n test-ns get serviceaccount,rolebinding
 #+begin_src bash 
 kubectl delete workshopnamespace $(kubectl get workshopnamespace -o jsonpath='{.items[*].metadata.name}')
 kubectl delete -f deploy/role.yaml,deploy/role_binding.yaml,deploy/clusterrole_binding.yaml,deploy/service_account.yaml
-kubectl delete -f deploy/crds/workshopnamespaces_v1alpha1_workshopnamespace_crd.yaml
+kubectl delete deployment workshop-namespace-operator
+kubectl delete -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
 #+end_src

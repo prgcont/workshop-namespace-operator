@@ -1,6 +1,7 @@
-apiVersion: workshopnamespaces.operator.prgcont.cz/v1alpha1
+apiVersion: operator.prgcont.cz/v1alpha1
 kind: WorkshopNamespace
 metadata:
   name: test-ns
 spec:
   # Add fields here
+  dummy: dummy

@@ -1,9 +1,9 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: workshopnamespaces.workshopnamespaces.operator.prgcont.cz
+  name: workshopnamespaces.operator.prgcont.cz
 spec:
-  group: workshopnamespaces.operator.prgcont.cz
+  group: operator.prgcont.cz
   names:
     kind: WorkshopNamespace
     listKind: WorkshopNamespaceList
