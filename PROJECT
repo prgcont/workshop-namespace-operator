@@ -1,0 +1,3 @@
+version: "1"
+domain: prgcont.cz
+repo: github.com/prgcont/workshop-namespace-operator

@@ -105,3 +105,13 @@ kubectl delete -f deploy/role.yaml,deploy/role_binding.yaml,deploy/clusterrole_b
 kubectl delete deployment workshop-namespace-operator
 kubectl delete -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
 #+end_src
+
+*** Develop
+Adding k8s libraries using kubebuilder (already done).
+
+#+begin_src bash
+kubebuilder init --domain prgcont.cz --license apache2 --owner "The Prgcont Team"
+kubebuilder create api --group operator --version v1alpha1 --kind WorkshopNamespace
+#+end_src
+
+
