@@ -1,9 +1,0 @@
-apiVersion: operator.prgcont.cz/v1alpha1
-kind: WorkshopNamespace
-metadata:
-  labels:
-    controller-tools.k8s.io: "1.0"
-  name: workshopnamespace-sample
-spec:
-  # Add fields here
-  foo: bar
