@@ -62,26 +62,27 @@ kubectl apply -f ./deploy/crds/workshopnamespaces_v1alpha1_operator_cr.yaml
 
 Publish container:
 #+begin_src bash
-operator-sdk build prgcont/workshop-namespace-operator:v0.0.1
-docker push prgcont/workshop-namespace-operator:v0.0.1
+operator-sdk build prgcont/workshop-namespace-operator:v0.0.2
+docker push prgcont/workshop-namespace-operator:v0.0.2
 #+end_src
 
 Create CRD in target cluster:
 #+begin_src bash
-kubectl create -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
+export OPERATOR_NAMESPACE=default
+kubectl -n ${OPERATOR_NAMESPACE} create -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
 #+end_src
 
 Create Operator 
 #+begin_src bash
-kubectl create -f deploy/role.yaml,deploy/role_binding.yaml,deploy/clusterrole_binding.yaml,deploy/service_account.yaml
+kubectl -n ${OPERATOR_NAMESPACE} create -f deploy/role.yaml,deploy/role_binding.yaml,deploy/clusterrole_binding.yaml,deploy/service_account.yaml
 # Update operator container image and deploy to cluster 
-sed 's/{{ REPLACE_IMAGE }}/prgcont\/workshop-namespace-operator:v0.0.1/' deploy/operator.yaml | kubectl create -f -
+sed 's/{{ REPLACE_IMAGE }}/prgcont\/workshop-namespace-operator:v0.0.2/' deploy/operator.yaml | kubectl -n ${OPERATOR_NAMESPACE} create -f -
+sed 's/{{ KUBERNETES_SERVER }}/https:\/\/192.168.64.21:8443/' deploy/config.yaml | kubectl -n ${OPERATOR_NAMESPACE} create -f -
 #+end_src
 
 Create test CR to verify if namespace is created:
 #+begin_src bash
-kubectl create -f deploy/crds/workshopnamespaces_v1alpha1_operator_cr.yaml
-
+kubectl -n ${OPERATOR_NAMESPACE} create -f deploy/crds/workshopnamespaces_v1alpha1_operator_cr.yaml
 #+end_src
 
 Verify that Namespace test-ns was created
@@ -92,7 +93,7 @@ kubectl get ns
 kubectl -n test-ns get serviceaccount,rolebinding
 # NAME               SECRETS   AGE
 # sa/default         1         3d
-# sa/test-ns-admin   1         3d
+# sa/workshop-user   1         3d
 
 # NAME                        KIND                                       SUBJECTS
 # rolebindings/test-nsadmin   RoleBinding.v1.rbac.authorization.k8s.io   1 item(s)
@@ -100,9 +101,10 @@ kubectl -n test-ns get serviceaccount,rolebinding
 
 *** Cleanup cluster 
 #+begin_src bash 
-kubectl delete workshopnamespace $(kubectl get workshopnamespace -o jsonpath='{.items[*].metadata.name}')
-kubectl delete -f deploy/role.yaml,deploy/role_binding.yaml,deploy/clusterrole_binding.yaml,deploy/service_account.yaml
-kubectl delete deployment workshop-namespace-operator
+kubectl -n ${OPERATOR_NAMESPACE} delete workshopnamespace $(kubectl get workshopnamespace -o jsonpath='{.items[*].metadata.name}')
+kubectl -n ${OPERATOR_NAMESPACE} delete -f deploy/role.yaml,deploy/role_binding.yaml,deploy/clusterrole_binding.yaml,deploy/service_account.yaml
+kubectl -n ${OPERATOR_NAMESPACE} delete deployment workshop-namespace-operator
+kubectl -n ${OPERATOR_NAMESPACE} delete configmap kubernetes-server
 kubectl delete -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
 #+end_src
 

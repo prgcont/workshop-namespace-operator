@@ -1,2 +1,4 @@
 ---
 # defaults file for workshopnamespace
+serviceaccount_name: "workshop-user"
+main_namespace: "default"

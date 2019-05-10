@@ -1,8 +1,17 @@
 ---
+- name: Load Kubernetes server address
+  k8s:
+    state: present
+    api_version: v1
+    kind: ConfigMap
+    namespace: "{{ main_namespace }}"
+    name: kubernetes-server
+  register: kubernetes_server
+
 - name: Set namespace variables
   set_fact:
-    namespace_name: "{{ meta.name }}"
-    serviceaccount_name: "{{ meta.name }}-admin"
+    user_namespace_name: "{{ meta.name }}"
+    cluster_server: "{{ kubernetes_server.result.data.server }}"
 
 - name: Create Namespace
   k8s:
@@ -19,7 +28,7 @@
     state: present
     api_version: v1
     kind: ServiceAccount
-    namespace: "{{ namespace_name }}"
+    namespace: "{{ user_namespace_name }}"
     name: "{{ serviceaccount_name }}"
   register: sa_result
 
@@ -28,16 +37,17 @@
     state: present
     api_version: v1
     kind: Secret
-    namespace: "{{ namespace_name }}"
+    namespace: "{{ user_namespace_name }}"
     name: "{{ sa_result.result.secrets[0].name }}"
-  register: service_result
+  register: user_service_secret
 
-- name: Create Secret
+
+- name: Set namespace variables
+  set_fact:
+    cluster_certificate_authority_data: "{{ user_service_secret.result.data['ca.crt'] }}"
+    serviceaccount_token: "{{ user_service_secret.result.data.token | b64decode }}"
+
+- name: Create Secret with kubeconfig
   k8s:
     state: present
-    api_version: v1
-    kind: Secret
-    namespace: default
-    name: "namespace-{{ namespace_name }}"
-    definition:
-      data: "{{ service_result.result.data }}"
+    definition: "{{ lookup('template', 'kubeconfig.yaml.j2') | from_yaml }}"

@@ -1,7 +1,7 @@
 ---
 - name: Set namespace variables
   set_fact:
-    namespace_name: "{{ meta.name }}"
+    user_namespace_name: "{{ meta.name }}"
 
 - name: Delete Namespace
   k8s:
@@ -17,4 +17,4 @@
     api_version: v1
     kind: Secret
     namespace: default
-    name: "namespace-{{ namespace_name }}"
+    name: "kubeconfig-{{ user_namespace_name }}"
