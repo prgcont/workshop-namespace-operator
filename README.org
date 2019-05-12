@@ -1,12 +1,94 @@
 * Workshop Namespace Operator
 
-Kubernetes Operator for setting up Kubernetes Namespace and User for workshop sessions.
+Kubernetes Operator for setting up Kubernetes Namespace and User privileged for workshop sessions.
+Repository also provides CRD APIs for golang in folder ~pkg/apis~.
 
-** Deploying operator to Kubernetes cluster
+** About 
 
-Register CRD:
+Workshop Namespace Operator is created using [[https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md][operator-sdk framework]]. 
+
+The operator will ensure that there is namespace for each WorkshopNamespace CR. 
+
+For example this Custom Resource: 
+
+#+begin_src yaml
+apiVersion: operator.prgcont.cz/v1alpha1
+kind: WorkshopNamespace
+metadata:
+  name: example-ns
+#+end_src
+
+will result in:
+- /Namespace/: ~example-ns~
+  - /ServiceAccount/: ~workshop-user~
+  - /RoleBinding/ granting ~workshop-user~ namespaced ~cluster-admin~ privileges
+- /Namespace/: ~default~ (or namespace where operator runs in)
+  - /Secret/: ~kubeconfig-example-ns~
+    - Secret contains kubeconfig for created /ServiceAccount/
+    
+
+*** Configuration
+
+Operator is configured with /ConfigMap/ ~kubernetes-server~, it must contain key ~data.server~ which declares which Server will be set in all generated kubeconfigs.  
+
+Example config:
+#+begin_src yaml
+apiVersion: v1 
+kind: ConfigMap
+metadata:
+  name: kubernetes-server
+data:
+  server: https://workshop.prgcont.cz:443
+#+end_src
+
+** Deploy to k8s cluster
+
+Publish container:
+#+begin_src bash
+operator-sdk build prgcont/workshop-namespace-operator:v0.0.2
+docker push prgcont/workshop-namespace-operator:v0.0.2
+#+end_src
+
+Create CRD in target cluster:
+#+begin_src bash
+export OPERATOR_NAMESPACE=default
+kubectl -n ${OPERATOR_NAMESPACE} create -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
+#+end_src
+
+Create Operator 
+#+begin_src bash
+kubectl -n ${OPERATOR_NAMESPACE} create -f deploy/role.yaml,deploy/role_binding.yaml,deploy/clusterrole_binding.yaml,deploy/service_account.yaml
+# Update operator container image and deploy to cluster 
+sed 's/{{ REPLACE_IMAGE }}/prgcont\/workshop-namespace-operator:v0.0.2/' deploy/operator.yaml | kubectl -n ${OPERATOR_NAMESPACE} create -f -
+sed 's/{{ KUBERNETES_SERVER }}/https:\/\/192.168.64.21:8443/' deploy/config.yaml | kubectl -n ${OPERATOR_NAMESPACE} create -f -
+#+end_src
+
+Create test CR to verify if namespace is created:
+#+begin_src bash
+kubectl -n ${OPERATOR_NAMESPACE} create -f deploy/crds/workshopnamespaces_v1alpha1_operator_cr.yaml
+#+end_src
+
+Verify that Namespace test-ns was created
+#+begin_src bash
+kubectl get ns
+
+# Objects in namespace
+kubectl -n test-ns get serviceaccount,rolebinding
+# NAME               SECRETS   AGE
+# sa/default         1         3d
+# sa/workshop-user   1         3d
+
+# NAME                        KIND                                       SUBJECTS
+# rolebindings/test-nsadmin   RoleBinding.v1.rbac.authorization.k8s.io   1 item(s)
+#+end_src
+
+*** Cleanup cluster 
 #+begin_src bash 
-kubectl apply -f ./deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
+kubectl -n ${OPERATOR_NAMESPACE} delete workshopnamespace $(kubectl get workshopnamespace -o jsonpath='{.items[*].metadata.name}')
+kubectl -n ${OPERATOR_NAMESPACE} delete -f deploy/role.yaml,deploy/role_binding.yaml,deploy/clusterrole_binding.yaml,deploy/service_account.yaml
+kubectl -n ${OPERATOR_NAMESPACE} delete deployment workshop-namespace-operator
+kubectl -n ${OPERATOR_NAMESPACE} delete configmap kubernetes-server
+kubectl delete -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
 #+end_src
 
 ** Local testing
@@ -58,57 +140,9 @@ Create test CR:
 kubectl apply -f ./deploy/crds/workshopnamespaces_v1alpha1_operator_cr.yaml
 #+end_src
 
-*** Deploy to k8s cluster
 
-Publish container:
-#+begin_src bash
-operator-sdk build prgcont/workshop-namespace-operator:v0.0.2
-docker push prgcont/workshop-namespace-operator:v0.0.2
-#+end_src
+** Develop
 
-Create CRD in target cluster:
-#+begin_src bash
-export OPERATOR_NAMESPACE=default
-kubectl -n ${OPERATOR_NAMESPACE} create -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
-#+end_src
-
-Create Operator 
-#+begin_src bash
-kubectl -n ${OPERATOR_NAMESPACE} create -f deploy/role.yaml,deploy/role_binding.yaml,deploy/clusterrole_binding.yaml,deploy/service_account.yaml
-# Update operator container image and deploy to cluster 
-sed 's/{{ REPLACE_IMAGE }}/prgcont\/workshop-namespace-operator:v0.0.2/' deploy/operator.yaml | kubectl -n ${OPERATOR_NAMESPACE} create -f -
-sed 's/{{ KUBERNETES_SERVER }}/https:\/\/192.168.64.21:8443/' deploy/config.yaml | kubectl -n ${OPERATOR_NAMESPACE} create -f -
-#+end_src
-
-Create test CR to verify if namespace is created:
-#+begin_src bash
-kubectl -n ${OPERATOR_NAMESPACE} create -f deploy/crds/workshopnamespaces_v1alpha1_operator_cr.yaml
-#+end_src
-
-Verify that Namespace test-ns was created
-#+begin_src bash
-kubectl get ns
-
-# Objects in namespace
-kubectl -n test-ns get serviceaccount,rolebinding
-# NAME               SECRETS   AGE
-# sa/default         1         3d
-# sa/workshop-user   1         3d
-
-# NAME                        KIND                                       SUBJECTS
-# rolebindings/test-nsadmin   RoleBinding.v1.rbac.authorization.k8s.io   1 item(s)
-#+end_src
-
-*** Cleanup cluster 
-#+begin_src bash 
-kubectl -n ${OPERATOR_NAMESPACE} delete workshopnamespace $(kubectl get workshopnamespace -o jsonpath='{.items[*].metadata.name}')
-kubectl -n ${OPERATOR_NAMESPACE} delete -f deploy/role.yaml,deploy/role_binding.yaml,deploy/clusterrole_binding.yaml,deploy/service_account.yaml
-kubectl -n ${OPERATOR_NAMESPACE} delete deployment workshop-namespace-operator
-kubectl -n ${OPERATOR_NAMESPACE} delete configmap kubernetes-server
-kubectl delete -f deploy/crds/workshopnamespaces_v1alpha1_operator_crd.yaml
-#+end_src
-
-*** Develop
 Adding k8s libraries using kubebuilder (already done).
 
 #+begin_src bash
