@@ -12,6 +12,7 @@
   set_fact:
     user_namespace_name: "{{ meta.name }}"
     cluster_server: "{{ kubernetes_server.result.data.server }}"
+    user_id: "{{ meta }}"
 
 - name: Create Namespace
   k8s:

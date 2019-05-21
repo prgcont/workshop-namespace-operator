@@ -1,6 +1,6 @@
 ---
 # vars file for workshopnamespace
-# Default vars
-meta:
-  name: "testname"
+# Default vars for testing
+# meta:
+#   name: "test"
 namespace_name: "{{ meta.name }}"
