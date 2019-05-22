@@ -143,11 +143,19 @@ kubectl apply -f ./deploy/crds/workshopnamespaces_v1alpha1_operator_cr.yaml
 
 ** Develop
 
-Adding k8s libraries using kubebuilder (already done).
+Adding k8s go client CRD using kubebuilder (already done).
 
 #+begin_src bash
 kubebuilder init --domain prgcont.cz --license apache2 --owner "The Prgcont Team"
 kubebuilder create api --group operator --version v1alpha1 --kind WorkshopNamespace
 #+end_src
 
+Re-generate go client libraries for ~WorkshopNamespace~ CRD.
+#+begin_src bash
+vendor/k8s.io/code-generator/generate-groups.sh all \
+                                                github.com/prgcont/workshop-namespace-operator/pkg/client \
+                                                github.com/prgcont/workshop-namespace-operator/pkg/apis \
+                                                operator:v1alpha1
+#+end_src
+It is necessary to re-generate client libraries every CRD is updated.
 
